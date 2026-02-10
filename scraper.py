@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-Scraper para la biblioteca de Homebrew de PSP de Internet Archive
-Extrae categorías, enlaces de descarga y tags de cada homebrew
-"""
 
 import requests
 from bs4 import BeautifulSoup
@@ -21,10 +17,8 @@ class PSPHomebrewScraper:
         })
     
     def get_collection_items(self) -> List[str]:
-        """Obtiene todos los IDs de items de la colección"""
         print("Obteniendo lista de items de la colección...")
         
-        # Usar la API de Internet Archive para obtener todos los items
         api_url = "https://archive.org/advancedsearch.php"
         params = {
             'q': 'collection:psp-homebrew-library',
@@ -54,12 +48,10 @@ class PSPHomebrewScraper:
         metadata_url = f"{self.base_url}/metadata/{identifier}"
         
         try:
-            # Obtener metadata del item
             metadata_response = self.session.get(metadata_url, timeout=30)
             metadata_response.raise_for_status()
             metadata = metadata_response.json()
             
-            # Extraer información relevante
             item_data = {
                 'identifier': identifier,
                 'title': metadata.get('metadata', {}).get('title', ''),
@@ -77,7 +69,6 @@ class PSPHomebrewScraper:
                     item_data['download_url'] = f"{self.base_url}/download/{identifier}/{filename}"
                     break
             
-            # Si no hay archivo zip, buscar otros formatos comunes
             if not item_data['download_url']:
                 for file in files:
                     filename = file.get('name', '')
@@ -95,12 +86,10 @@ class PSPHomebrewScraper:
         """Extrae la categoría del metadata"""
         meta = metadata.get('metadata', {})
         
-        # Intentar obtener de subject
         subject = meta.get('subject', [])
         if isinstance(subject, str):
             subject = [subject]
         
-        # Buscar categorías comunes de PSP homebrew
         categories = ['Games', 'Emulators', 'Applications', 'Utilities', 
                      'Media', 'Demos', 'Plugins', 'Themes']
         
@@ -109,36 +98,30 @@ class PSPHomebrewScraper:
                 if cat.lower() in str(subj).lower():
                     return cat
         
-        # Si no se encuentra, usar la primera subject o 'Unknown'
         if subject:
             return str(subject[0])
         
         return 'Unknown'
     
     def extract_tags(self, metadata: Dict) -> List[str]:
-        """Extrae los tags del metadata"""
         meta = metadata.get('metadata', {})
         tags = []
         
-        # Obtener subjects como tags
         subject = meta.get('subject', [])
         if isinstance(subject, str):
             subject = [subject]
         tags.extend([str(s) for s in subject])
         
-        # Obtener keywords si existen
         keywords = meta.get('keywords', [])
         if isinstance(keywords, str):
             keywords = [keywords]
         tags.extend([str(k) for k in keywords])
         
-        # Limpiar y deduplicar
         tags = list(set([tag.strip() for tag in tags if tag]))
         
         return tags
     
     def scrape_all(self) -> List[Dict]:
-        """Scrape todos los items de la colección"""
         identifiers = self.get_collection_items()
         results = []
         
@@ -150,13 +133,11 @@ class PSPHomebrewScraper:
             if item_data and item_data['download_url']:
                 results.append(item_data)
             
-            # Pequeña pausa para no sobrecargar el servidor
             time.sleep(0.5)
         
         return results
     
     def save_to_json(self, data: List[Dict], filename: str = 'psp_homebrew_library.json'):
-        """Guarda los datos en un archivo JSON"""
         with open(filename, 'w', encoding='utf-8') as f:
             json.dump({
                 'total_items': len(data),
@@ -180,7 +161,6 @@ def main():
     print("=" * 60)
     print("Scraping completado!")
     
-    # Estadísticas
     categories = {}
     for item in results:
         cat = item['category']
