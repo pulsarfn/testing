@@ -3,7 +3,6 @@ name: Scrape PSP Homebrew Library
 on:
   workflow_dispatch:
   schedule:
-    # Ejecutar una vez al día a las 00:00 UTC
     - cron: '0 0 * * *'
 
 jobs:
